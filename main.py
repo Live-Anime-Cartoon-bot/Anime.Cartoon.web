@@ -356,10 +356,21 @@ async def handle_record(client, message: Message):
 
         await msg.edit_text("📥 **Starting recording...**")
 
-        # Record with all video and audio streams
+        # 🔧 IMPROVED FFmpeg Command with Connection Stability Fixes
         ffmpeg_cmd = (
-            f'ffmpeg -y -probesize 10000000 -analyzeduration 15000000 '
-            f'-i "{url}" -map 0:v -map 0:a -c:v copy -c:a copy -t {timestamp} "{video_path}"'
+            f'ffmpeg -y '
+            f'-connect_timeout 5000 '  # ✅ Connection timeout: 5 seconds
+            f'-timeout 30000 '  # ✅ Read timeout: 30 seconds
+            f'-rtsp_transport tcp '  # ✅ Use TCP instead of UDP (more reliable)
+            f'-reconnect 1 '  # ✅ Enable automatic reconnection
+            f'-reconnect_at_eof 1 '  # ✅ Reconnect if stream ends
+            f'-reconnect_streamed 1 '  # ✅ Reconnect for streamed protocols
+            f'-reconnect_delay_max 10 '  # ✅ Max 10 seconds between reconnects
+            f'-probesize 10000000 -analyzeduration 15000000 '
+            f'-i "{url}" '
+            f'-map 0:v -map 0:a -c:v copy -c:a copy '
+            f'-t {timestamp} '
+            f'"{video_path}"'
         )
         
         # Run FFmpeg and track PID
